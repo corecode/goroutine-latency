@@ -9,12 +9,13 @@ func main() {
 	n := 0
 	for {
 		fmt.Printf("activity=%d\n", n)
-		bench(benchEmpty)
-		bench(benchChan)
-		bench(benchPipe)
-		bench(benchPipeInternal)
+		bench(benchTcp)
+		// bench(benchEmpty)
+		// bench(benchChan)
+		// bench(benchPipe)
+		// bench(benchPipeInternal)
 
-		for i := 0; i < 10; i++ {
+		for i := 0; i < 2; i++ {
 			n++
 			go activity()
 		}

@@ -1,12 +1,9 @@
 package main
 
-import (
-	"crypto/sha256"
-	"os"
-)
+import "crypto/sha256"
 
 func activity() {
-	r, w, _ := os.Pipe()
+	r, w, _ := socketpipe() //os.Pipe()
 
 	go func() {
 		data := make([]byte, sha256.Size)

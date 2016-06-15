@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"time"
 )
@@ -46,8 +47,10 @@ func (l *bucket) String() string {
 		if width == 0 && len(r) == 0 {
 			continue
 		}
-		dur := (1 << uint(i+1)) * time.Nanosecond
-		r = append(r, fmt.Sprintf("%v  %s\n", dur, strings.Repeat("X", width)))
+		ns := math.Pow(2, float64(i)+1.0)
+		order := math.Pow(10, math.Floor(math.Log10(ns)))
+		dur := time.Duration(math.Floor(0.5+ns/order)*order) * time.Nanosecond
+		r = append(r, fmt.Sprintf("%5v  %s\n", dur, strings.Repeat("X", width)))
 		if width > 0 {
 			last = len(r)
 		}

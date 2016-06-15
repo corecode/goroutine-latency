@@ -8,7 +8,7 @@ import (
 )
 
 func bench(b func(l *bucket, n int)) {
-	n := 1000
+	n := 100
 	var l *bucket
 
 	fmt.Printf("%v...\n", runtime.FuncForPC(reflect.ValueOf(b).Pointer()).Name())

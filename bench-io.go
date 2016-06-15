@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/binary"
 	"io"
+	"net"
 	"os"
 	"time"
 )
@@ -29,6 +30,8 @@ func benchPipeInternal(l *bucket, n int) {
 	r, w := io.Pipe()
 
 	benchPipeGeneric(l, n, r, w)
+	r.Close()
+	w.Close()
 }
 
 func benchPipe(l *bucket, n int) {
@@ -39,4 +42,45 @@ func benchPipe(l *bucket, n int) {
 	}
 
 	benchPipeGeneric(l, n, r, w)
+	r.Close()
+	w.Close()
+}
+
+func socketpipe() (net.Conn, net.Conn, error) {
+	listen, err := net.ListenTCP("tcp6", &net.TCPAddr{net.IPv6loopback, 0, ""})
+	if err != nil {
+		return nil, nil, err
+	}
+	c := make(chan net.Conn)
+	go func() {
+		conn, err := listen.Accept()
+		listen.Close()
+		if err != nil {
+			return
+		}
+		c <- conn
+	}()
+	r, err := net.Dial(listen.Addr().Network(), listen.Addr().String())
+	if err != nil {
+		listen.Close()
+		return nil, nil, err
+	}
+	w := <-c
+	close(c)
+
+	r.(*net.TCPConn).SetNoDelay(true)
+	w.(*net.TCPConn).SetNoDelay(true)
+
+	return r, w, nil
+}
+
+func benchTcp(l *bucket, n int) {
+	r, w, err := socketpipe()
+	if err != nil {
+		panic(err)
+	}
+
+	benchPipeGeneric(l, n, r, w)
+	r.Close()
+	w.Close()
 }
