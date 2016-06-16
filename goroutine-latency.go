@@ -10,10 +10,10 @@ func main() {
 	for {
 		fmt.Printf("activity=%d\n", n)
 		bench(benchTcp)
-		// bench(benchEmpty)
-		// bench(benchChan)
-		// bench(benchPipe)
-		// bench(benchPipeInternal)
+		bench(benchEmpty)
+		bench(benchChan)
+		bench(benchPipe)
+		bench(benchPipeInternal)
 
 		for i := 0; i < 2; i++ {
 			n++

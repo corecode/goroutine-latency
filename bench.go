@@ -7,28 +7,43 @@ import (
 	"time"
 )
 
-func bench(b func(l *bucket, n int)) {
-	n := 100
-	var l *bucket
+type benchInfo struct {
+	l      *bucket
+	n      int
+	locked bool
+}
 
-	fmt.Printf("%v...\n", runtime.FuncForPC(reflect.ValueOf(b).Pointer()).Name())
+func bench(b func(inf benchInfo)) {
+	inf := benchInfo{
+		l:      nil,
+		n:      100,
+		locked: false,
+	}
+
 	for {
-		start := time.Now()
-		l = newBucket()
-		b(l, n)
+		fmt.Printf("%v...\n", runtime.FuncForPC(reflect.ValueOf(b).Pointer()).Name())
+		for {
+			start := time.Now()
+			inf.l = newBucket()
+			b(inf)
 
-		duration := time.Since(start)
+			duration := time.Since(start)
 
-		if duration > 2*time.Second {
+			if duration > 2*time.Second {
+				break
+			}
+
+			if duration*10 > 2*time.Second {
+				inf.n = int(int64(2*time.Second) * int64(inf.n) / int64(duration))
+			} else {
+				inf.n *= 10
+			}
+		}
+		fmt.Printf("n = %d, locked = %v\n", inf.n, inf.locked)
+		fmt.Printf("%v\n", inf.l)
+		if inf.locked {
 			break
 		}
-
-		if duration*10 > 2*time.Second {
-			n = int(int64(2*time.Second) * int64(n) / int64(duration))
-		} else {
-			n *= 10
-		}
+		inf.locked = true
 	}
-	fmt.Printf("n = %d\n", n)
-	fmt.Printf("%v\n", l)
 }

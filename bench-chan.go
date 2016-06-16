@@ -1,14 +1,19 @@
 package main
 
-import "time"
+import (
+	"runtime"
+	"time"
+)
 
 type benchChanD struct {
-	l    *bucket
-	n    int
+	benchInfo
 	a, b chan time.Time
 }
 
 func (bm *benchChanD) A() {
+	if bm.locked {
+		runtime.LockOSThread()
+	}
 	for i := 0; i < bm.n; i++ {
 		bm.a <- time.Now()
 		s := <-bm.b
@@ -17,6 +22,9 @@ func (bm *benchChanD) A() {
 }
 
 func (bm *benchChanD) B() {
+	if bm.locked {
+		runtime.LockOSThread()
+	}
 	for i := 0; i < bm.n; i++ {
 		s := <-bm.a
 		bm.l.Record(time.Since(s))
@@ -24,14 +32,18 @@ func (bm *benchChanD) B() {
 	}
 }
 
-func benchChan(l *bucket, n int) {
+func benchChan(inf benchInfo) {
 	b := &benchChanD{
-		l,
-		n,
-		make(chan time.Time),
-		make(chan time.Time),
+		benchInfo: inf,
+		a:         make(chan time.Time),
+		b:         make(chan time.Time),
 	}
 
+	c := make(chan struct{})
 	go b.B()
-	b.A()
+	go func() {
+		b.A()
+		close(c)
+	}()
+	<-c
 }

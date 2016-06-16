@@ -1,10 +1,21 @@
 package main
 
-import "time"
+import (
+	"runtime"
+	"time"
+)
 
-func benchEmpty(l *bucket, n int) {
-	for i := 0; i < n; i++ {
-		t := time.Now()
-		l.Record(time.Since(t))
-	}
+func benchEmpty(inf benchInfo) {
+	c := make(chan struct{})
+	go func() {
+		if inf.locked {
+			runtime.LockOSThread()
+		}
+		for i := 0; i < inf.n; i++ {
+			t := time.Now()
+			inf.l.Record(time.Since(t))
+		}
+		close(c)
+	}()
+	<-c
 }
